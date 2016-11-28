@@ -1,0 +1,8 @@
+footer {
+  display: flex;
+}
+
+footer a {
+  flex: 1;
+  border-radius: 10px;
+}
