@@ -11,11 +11,14 @@ module.exports = {
   devtool: 'source-map',
 
   entry: [
-
+    paths.appIndexJs
   ],
 
   output: {
-
+    path: paths.appBuild,
+    filename: 'static/js/[name].[chunkhash:8].js',
+    chunkFilename: 'static/js/[name].[chunkhash:8].chunk.js',
+    publicPath: '/'
   },
 
   resolve: {
@@ -40,10 +43,10 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: ExtractTextPlugin.extract('style', 'css?importLoaders=1&-minimize')
+        loader: 'style!css?importLoaders=1&-minimize!postcss'
       },
       {
-        test: /\.(jpe?g|png|gif|svg|ico|ot|otf|webp|ttf|woff|woff2)(\?.*)?$/,
+        test: /\.(ico|ot|otf|webp|ttf|woff|woff2)(\?.*)?$/,
         loader: 'file',
         query: {
           name: 'static/media/[name].[hash:8].[ext]'
@@ -56,22 +59,69 @@ module.exports = {
           limit: 10000,
           name: 'static/media/[name].[hash:8].[ext]'
         }
+      },
+      {
+        test: /\.(jpe?g|png|gif|svg)$/i,
+        loaders: [
+          'file?name=static/media/[name].[hash:8].[ext]',
+          'image-webpack?bypassOnDebug&optimizationLevel=7&interlaced=false'
+        ]
       }
     ]
   },
 
+  postcss: function () {
+    return [
+      autoprefixer({
+        browsers: [
+          '>1%',
+          'last 2 versions',
+          'Firefox ESR'
+        ]
+      }),
+    ];
+  },
+
   plugins: [
     new webpack.DefinePlugin({
-      'NODE_ENV': process.env.NODE_ENV
+      'process.env': {
+        NODE_ENV: JSON.stringify('production')
+      }
     }),
     new HtmlWebpackPlugin({
-      inject: true,
+      inject: 'body',
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true,
+        removeRedundantAttributes: true,
+        useShortDoctype: true,
+        removeEmptyAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        keepClosingSlash: true,
+        minifyJS: true,
+        minifyCSS: true,
+        minifyURLs: true
+      },
       template: paths.appHtml
     }),
-    new ScriptExtHtmlWebpackPlugin(),
+    new ScriptExtHtmlWebpackPlugin({
+      defaultAttribute: 'async'
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        screw_ie8: true,
+        warnings: false
+      },
+      mangle: {
+        screw_ie8: true
+      },
+      output: {
+        comments: false,
+        screw_ie8: true
+      }
+    }),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.optimize.DedupePlugin(),
-    new ExtractTextPlugin('static/css/styles.css')
   ],
 
   node: {

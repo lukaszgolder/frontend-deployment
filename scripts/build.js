@@ -1,3 +1,5 @@
+process.env.NODE_ENV = 'production';
+
 var fs = require('fs-extra');
 var chalk = require('chalk');
 var webpack = require('webpack');
@@ -12,3 +14,23 @@ function printErrors(summary, errors) {
     console.log();
   });
 }
+
+function build() {
+  webpack(config).run((err, stats) => {
+    if (err) {
+      printErrors('Failed to compile.', [err]);
+      process.exit(1);
+    }
+  });
+}
+
+function copyPublicFolder() {
+  fs.copySync(paths.appPublic, paths.appBuild, {
+    dereference: true,
+    filter: file => file !== paths.appHtml
+  });
+}
+
+fs.emptyDirSync(paths.appBuild);
+build();
+copyPublicFolder();
